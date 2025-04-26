@@ -1,0 +1,86 @@
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+
+class MapPage extends StatefulWidget {
+  const MapPage({super.key});
+
+  @override
+  State<MapPage> createState() => _MapPageState();
+}
+
+class _MapPageState extends State<MapPage> {
+  List<LatLng> nodes = [];
+  List<Map<String, int>> edges = [];
+
+  @override
+  void initState() {
+    super.initState();
+    loadRoadMap();
+  }
+
+  Future<void> loadRoadMap() async {
+    final String data = await rootBundle.loadString('assets/roadmap.json');
+    final jsonResult = json.decode(data);
+
+    for (var node in jsonResult['nodes']) {
+      double lat = node['lat'];
+      double lon = node['lon'];
+      nodes.add(LatLng(lat, lon));
+    }
+
+    for (var edge in jsonResult['edges']) {
+      edges.add({'from': edge['from'], 'to': edge['to']});
+    }
+
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('道路圖資分析與計算 Demo'),
+      ),
+      body: FlutterMap(
+        options: MapOptions(
+          initialCenter:
+              nodes.isNotEmpty ? nodes[0] : const LatLng(25.0330, 121.5654),
+          initialZoom: 15,
+        ),
+        children: [
+          TileLayer(
+            urlTemplate: "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",
+            userAgentPackageName: 'com.ryan940618.roadmap',
+          ),
+          PolylineLayer(
+            polylines: [
+              ...edges.map((e) {
+                return Polyline(
+                  points: [
+                    nodes[e['from']!],
+                    nodes[e['to']!],
+                  ],
+                  strokeWidth: 2.0,
+                  color: Colors.grey,
+                );
+              }),
+            ],
+          ),
+          MarkerLayer(
+            markers: nodes.map((node) {
+              return Marker(
+                width: 10,
+                height: 10,
+                point: node,
+                child: const Icon(Icons.circle, size: 6, color: Colors.blue),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+}
