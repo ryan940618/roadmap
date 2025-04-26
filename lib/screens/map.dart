@@ -15,6 +15,7 @@ class _MapPageState extends State<MapPage> {
   List<LatLng> nodes = [];
   List<Map<String, int>> edges = [];
   List<LatLng> highlightPathPoints = [];
+  final MapController _mapController = MapController();
 
   @override
   void initState() {
@@ -46,7 +47,23 @@ class _MapPageState extends State<MapPage> {
         highlightPathPoints.add(nodes[index]);
       }
     }
+
+    if (highlightPathPoints.isNotEmpty) {
+      LatLng center = _calculateCenter(highlightPathPoints);
+      _mapController.move(center, 15);
+    }
+
     setState(() {});
+  }
+
+  LatLng _calculateCenter(List<LatLng> points) {
+    double latSum = 0;
+    double lonSum = 0;
+    for (var point in points) {
+      latSum += point.latitude;
+      lonSum += point.longitude;
+    }
+    return LatLng(latSum / points.length, lonSum / points.length);
   }
 
   @override
@@ -64,6 +81,7 @@ class _MapPageState extends State<MapPage> {
         ],
       ),
       body: FlutterMap(
+        mapController: _mapController,
         options: MapOptions(
           initialCenter:
               nodes.isNotEmpty ? nodes[0] : const LatLng(22.6490, 120.3265),
