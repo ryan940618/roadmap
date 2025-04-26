@@ -14,6 +14,7 @@ class MapPage extends StatefulWidget {
 class _MapPageState extends State<MapPage> {
   List<LatLng> nodes = [];
   List<Map<String, int>> edges = [];
+  List<LatLng> highlightPathPoints = [];
 
   @override
   void initState() {
@@ -38,11 +39,29 @@ class _MapPageState extends State<MapPage> {
     setState(() {});
   }
 
+  void highlightPath(List<int> nodeIndexes) {
+    highlightPathPoints = [];
+    for (var index in nodeIndexes) {
+      if (index >= 0 && index < nodes.length) {
+        highlightPathPoints.add(nodes[index]);
+      }
+    }
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('道路圖資分析與計算 Demo'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.route),
+            onPressed: () {
+              highlightPath([0, 2, 5, 10, 20]);
+            },
+          )
+        ],
       ),
       body: FlutterMap(
         options: MapOptions(
@@ -67,6 +86,12 @@ class _MapPageState extends State<MapPage> {
                   color: Colors.grey,
                 );
               }),
+              if (highlightPathPoints.length >= 2)
+                Polyline(
+                  points: highlightPathPoints,
+                  strokeWidth: 4.0,
+                  color: Colors.red,
+                )
             ],
           ),
           MarkerLayer(
