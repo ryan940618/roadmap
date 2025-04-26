@@ -47,7 +47,7 @@ class _MapPageState extends State<MapPage> {
       body: FlutterMap(
         options: MapOptions(
           initialCenter:
-              nodes.isNotEmpty ? nodes[0] : const LatLng(25.0330, 121.5654),
+              nodes.isNotEmpty ? nodes[0] : const LatLng(22.6490, 120.3265),
           initialZoom: 15,
         ),
         children: [
