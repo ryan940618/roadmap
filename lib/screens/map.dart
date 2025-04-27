@@ -175,33 +175,6 @@ class _MapPageState extends State<MapPage> {
     );
   }
 
-  void showNodeActionMenu(int nodeIndex) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(
-            leading: const Icon(Icons.play_arrow),
-            title: const Text('設為起點'),
-            onTap: () {
-              setState(() => startNode = nodeIndex);
-              Navigator.pop(context);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.flag),
-            title: const Text('設為終點'),
-            onTap: () {
-              setState(() => endNode = nodeIndex);
-              Navigator.pop(context);
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
   List<Marker> buildMarkers() {
     return nodes.asMap().entries.map((entry) {
       int index = entry.key;
