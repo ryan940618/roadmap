@@ -66,6 +66,67 @@ class _MapPageState extends State<MapPage> {
     return LatLng(latSum / points.length, lonSum / points.length);
   }
 
+  List<int> dijkstra(
+      List<LatLng> nodes, List<Map<String, int>> edges, int start, int goal) {
+    Map<int, List<Map<String, dynamic>>> graph = {}; //adjacency list
+    for (var edge in edges) {
+      int from = edge['from']!;
+      int to = edge['to']!;
+      double distance = const Distance().as(
+        LengthUnit.Meter,
+        nodes[from],
+        nodes[to],
+      );
+      graph.putIfAbsent(from, () => []).add({'node': to, 'cost': distance});
+      graph.putIfAbsent(to, () => []).add({'node': from, 'cost': distance});
+    }
+
+    //dijkstra setup
+    Map<int, double> dist = {};
+    Map<int, int?> prev = {};
+    List<int> Q = [];
+
+    for (int node = 0; node < nodes.length; node++) {
+      dist[node] = double.infinity;
+      prev[node] = null;
+      Q.add(node);
+    }
+    dist[start] = 0;
+
+    //dijkstra
+    while (Q.isNotEmpty) {
+      //找Q裡面dist最小的node
+      Q.sort((a, b) => dist[a]!.compareTo(dist[b]!));
+      int u = Q.removeAt(0);
+
+      if (u == goal) break; //若為目標就結束
+
+      for (var neighbor in graph[u] ?? []) {
+        int v = neighbor['node'];
+        double cost = neighbor['cost'];
+        double alt = dist[u]! + cost;
+        if (alt < dist[v]!) {
+          dist[v] = alt;
+          prev[v] = u;
+        }
+      }
+    }
+
+    //還原最短路徑
+    List<int> path = [];
+    int? u = goal;
+    while (u != null) {
+      path.insert(0, u);
+      u = prev[u];
+    }
+    return path;
+  }
+
+  void navigate(int start, int goal) {
+    List<int> path = dijkstra(nodes, edges, start, goal);
+    highlightPath(path);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
