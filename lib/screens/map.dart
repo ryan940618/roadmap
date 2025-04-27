@@ -138,6 +138,55 @@ class _MapPageState extends State<MapPage> {
       appBar: AppBar(
         title: const Text('道路圖資分析與計算 Demo'),
         actions: [
+          Row(
+            children: [
+              const Text('起點: '),
+              DropdownButton<int?>(
+                value: startNode,
+                hint: const Text('請選擇'),
+                items: [
+                  const DropdownMenuItem(
+                    value: null,
+                    child: Text('請選擇'),
+                  ),
+                  ...List.generate(nodes.length, (index) {
+                    return DropdownMenuItem(
+                      value: index,
+                      child: Text('n$index'),
+                    );
+                  })
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    startNode = value;
+                  });
+                },
+              ),
+              const SizedBox(width: 16),
+              const Text('終點: '),
+              DropdownButton<int?>(
+                value: endNode,
+                hint: const Text('請選擇'),
+                items: [
+                  const DropdownMenuItem(
+                    value: null,
+                    child: Text('請選擇'),
+                  ),
+                  ...List.generate(nodes.length, (index) {
+                    return DropdownMenuItem(
+                      value: index,
+                      child: Text('n$index'),
+                    );
+                  })
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    endNode = value;
+                  });
+                },
+              ),
+            ],
+          ),
           IconButton(
             icon: const Icon(Icons.flag),
             onPressed: selectedNode != null
