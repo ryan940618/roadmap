@@ -329,6 +329,7 @@ class _MapPageState extends State<MapPage> {
     setState(() {
       startNode = null;
       endNode = null;
+      selectedNode = null;
       path.clear();
     });
   }
