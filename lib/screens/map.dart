@@ -12,6 +12,7 @@ class MapPage extends StatefulWidget {
 }
 
 class _MapPageState extends State<MapPage> {
+  int? selectedNode;
   int? startNode;
   int? endNode;
   List<int> path = [];
@@ -147,6 +148,12 @@ class _MapPageState extends State<MapPage> {
                   }
                 : null,
           ),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              resetNavigation();
+            },
+          ),
         ],
       ),
       body: FlutterMap(
@@ -155,18 +162,14 @@ class _MapPageState extends State<MapPage> {
           initialCenter:
               nodes.isNotEmpty ? nodes[0] : const LatLng(22.6490, 120.3265),
           initialZoom: 15,
-          onTap: (tapPosition, latLng) {
-            int nearest = findNearestNode(latLng);
-            showNodeActionMenu(nearest);
-          },
         ),
         children: [
           TileLayer(
             urlTemplate: "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",
             userAgentPackageName: 'com.ryan940618.roadmap',
           ),
-          MarkerLayer(markers: buildMarkers()),
           PolylineLayer(polylines: buildPolylines()),
+          MarkerLayer(markers: buildMarkers()),
         ],
       ),
     );
@@ -207,18 +210,27 @@ class _MapPageState extends State<MapPage> {
         width: 30,
         height: 30,
         point: node,
-        child: Icon(
-          index == startNode
-              ? Icons.play_arrow
-              : index == endNode
-                  ? Icons.flag
-                  : Icons.circle,
-          color: index == startNode
-              ? Colors.green
-              : index == endNode
-                  ? Colors.red
-                  : Colors.blue,
-          size: 20,
+        child: GestureDetector(
+          onTap: () {
+            setState(() {
+              selectedNode = index;
+            });
+          },
+          child: Icon(
+            index == startNode
+                ? Icons.play_arrow
+                : index == endNode
+                    ? Icons.flag
+                    : Icons.circle,
+            color: index == startNode
+                ? Colors.green
+                : index == endNode
+                    ? Colors.red
+                    : index == selectedNode
+                        ? Colors.orange
+                        : Colors.blue,
+            size: 20,
+          ),
         ),
       );
     }).toList();
@@ -267,5 +279,13 @@ class _MapPageState extends State<MapPage> {
       }
     }
     return nearest;
+  }
+
+  void resetNavigation() {
+    setState(() {
+      startNode = null;
+      endNode = null;
+      path.clear();
+    });
   }
 }
