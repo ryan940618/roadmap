@@ -12,6 +12,10 @@ class MapPage extends StatefulWidget {
 }
 
 class _MapPageState extends State<MapPage> {
+  int? startNode;
+  int? endNode;
+  List<int> path = [];
+
   List<LatLng> nodes = [];
   List<Map<String, int>> edges = [];
   List<LatLng> highlightPathPoints = [];
@@ -134,11 +138,15 @@ class _MapPageState extends State<MapPage> {
         title: const Text('道路圖資分析與計算 Demo'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.route),
-            onPressed: () {
-              highlightPath([0, 2, 5, 10, 20]);
-            },
-          )
+            icon: const Icon(Icons.navigation),
+            onPressed: (startNode != null && endNode != null)
+                ? () {
+                    path = dijkstra(nodes, edges, startNode!, endNode!);
+                    highlightPath(path);
+                    setState(() {});
+                  }
+                : null,
+          ),
         ],
       ),
       body: FlutterMap(
@@ -147,44 +155,117 @@ class _MapPageState extends State<MapPage> {
           initialCenter:
               nodes.isNotEmpty ? nodes[0] : const LatLng(22.6490, 120.3265),
           initialZoom: 15,
+          onTap: (tapPosition, latLng) {
+            int nearest = findNearestNode(latLng);
+            showNodeActionMenu(nearest);
+          },
         ),
         children: [
           TileLayer(
             urlTemplate: "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",
             userAgentPackageName: 'com.ryan940618.roadmap',
           ),
-          PolylineLayer(
-            polylines: [
-              ...edges.map((e) {
-                return Polyline(
-                  points: [
-                    nodes[e['from']!],
-                    nodes[e['to']!],
-                  ],
-                  strokeWidth: 2.0,
-                  color: Colors.grey,
-                );
-              }),
-              if (highlightPathPoints.length >= 2)
-                Polyline(
-                  points: highlightPathPoints,
-                  strokeWidth: 4.0,
-                  color: Colors.red,
-                )
-            ],
+          MarkerLayer(markers: buildMarkers()),
+          PolylineLayer(polylines: buildPolylines()),
+        ],
+      ),
+    );
+  }
+
+  void showNodeActionMenu(int nodeIndex) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.play_arrow),
+            title: const Text('設為起點'),
+            onTap: () {
+              setState(() => startNode = nodeIndex);
+              Navigator.pop(context);
+            },
           ),
-          MarkerLayer(
-            markers: nodes.map((node) {
-              return Marker(
-                width: 10,
-                height: 10,
-                point: node,
-                child: const Icon(Icons.circle, size: 6, color: Colors.blue),
-              );
-            }).toList(),
+          ListTile(
+            leading: const Icon(Icons.flag),
+            title: const Text('設為終點'),
+            onTap: () {
+              setState(() => endNode = nodeIndex);
+              Navigator.pop(context);
+            },
           ),
         ],
       ),
     );
+  }
+
+  List<Marker> buildMarkers() {
+    return nodes.asMap().entries.map((entry) {
+      int index = entry.key;
+      LatLng node = entry.value;
+      return Marker(
+        width: 30,
+        height: 30,
+        point: node,
+        child: Icon(
+          index == startNode
+              ? Icons.play_arrow
+              : index == endNode
+                  ? Icons.flag
+                  : Icons.circle,
+          color: index == startNode
+              ? Colors.green
+              : index == endNode
+                  ? Colors.red
+                  : Colors.blue,
+          size: 20,
+        ),
+      );
+    }).toList();
+  }
+
+  List<Polyline> buildPolylines() {
+    List<Polyline> polylines = [];
+
+    polylines.addAll(edges.map((e) {
+      return Polyline(
+        points: [
+          nodes[e['from']!],
+          nodes[e['to']!],
+        ],
+        strokeWidth: 2.0,
+        color: Colors.grey,
+      );
+    }));
+
+    if (path.isNotEmpty) {
+      List<LatLng> pathPoints = path.map((i) => nodes[i]).toList();
+      polylines.add(
+        Polyline(
+          points: pathPoints,
+          strokeWidth: 5.0,
+          color: Colors.redAccent,
+        ),
+      );
+    }
+
+    return polylines;
+  }
+
+  int findNearestNode(LatLng latlng) {
+    double minDist = double.infinity;
+    int nearest = 0;
+    for (int i = 0; i < nodes.length; i++) {
+      double dist = const Distance().as(
+        LengthUnit.Meter,
+        nodes[i],
+        latlng,
+      );
+      if (dist < minDist) {
+        minDist = dist;
+        nearest = i;
+      }
+    }
+    return nearest;
   }
 }
