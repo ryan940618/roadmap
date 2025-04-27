@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import '../widgets/data.dart';
 
 class MapPage extends StatefulWidget {
   const MapPage({super.key});
@@ -140,6 +141,28 @@ class _MapPageState extends State<MapPage> {
         actions: [
           Row(
             children: [
+              IconButton(
+                icon: const Icon(Icons.download),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DataPage(),
+                    ),
+                  );
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.upload),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DataPage(),
+                    ),
+                  );
+                },
+              ),
               const Text('起點: '),
               DropdownButton<int?>(
                 value: startNode,
