@@ -139,6 +139,28 @@ class _MapPageState extends State<MapPage> {
         title: const Text('道路圖資分析與計算 Demo'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.flag),
+            onPressed: selectedNode != null
+                ? () {
+                    setState(() {
+                      startNode = selectedNode;
+                      selectedNode = null;
+                    });
+                  }
+                : null,
+          ),
+          IconButton(
+            icon: const Icon(Icons.location_on),
+            onPressed: selectedNode != null
+                ? () {
+                    setState(() {
+                      endNode = selectedNode;
+                      selectedNode = null;
+                    });
+                  }
+                : null,
+          ),
+          IconButton(
             icon: const Icon(Icons.navigation),
             onPressed: (startNode != null && endNode != null)
                 ? () {
