@@ -1,109 +1,110 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:latlong2/latlong.dart';
+import 'dart:convert';
 import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 
-class DataPage extends StatefulWidget {
-  @override
-  _DataPageState createState() => _DataPageState();
-}
+class DataPage extends StatelessWidget {
+  final List<LatLng> nodes;
+  final List<Map<String, dynamic>> edges;
+  final void Function(
+      List<LatLng> newNodes, List<Map<String, dynamic>> newEdges) onImport;
 
-class _DataPageState extends State<DataPage> {
-  List<Map<String, dynamic>> nodes = [];
-  List<Map<String, dynamic>> edges = [];
+  const DataPage({
+    super.key,
+    required this.nodes,
+    required this.edges,
+    required this.onImport,
+  });
 
-  Future<void> importData(String type) async {
-    final result = await FilePicker.platform.pickFiles();
-    if (result != null) {
-      String filePath = result.files.single.path!;
-      String fileContent = await File(filePath).readAsString();
-      Map<String, dynamic> data = jsonDecode(fileContent);
-
-      setState(() {
-        if (type == 'nodes') {
-          nodes = List<Map<String, dynamic>>.from(data['nodes']);
-        } else if (type == 'edges') {
-          edges = List<Map<String, dynamic>>.from(data['edges']);
-        }
-      });
-    }
-  }
-
-  Future<void> exportData(String type) async {
-    Map<String, dynamic> data = {
-      'nodes': nodes,
-      'edges': edges,
-    };
-    String jsonData = jsonEncode(data);
-
-    final result = await FilePicker.platform.saveFile(
-      fileName: type == 'nodes' ? 'nodes.json' : 'edges.json',
-    );
-
-    if (result != null) {
-      await File(result).writeAsString(jsonData);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('成功匯出 ${type == 'nodes' ? 'Nodes' : 'Edges'}')),
-      );
-    }
-  }
-
-  void _showImportExportSheet(String action, String type) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            children: [
-              Text(
-                action == 'import' ? '匯入 $type' : '匯出 $type',
-                style:
-                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  if (action == 'import') {
-                    importData(type);
-                  } else {
-                    exportData(type);
-                  }
-                  Navigator.pop(context);
-                },
-                child: Text(action == 'import' ? '選擇檔案匯入' : '匯出到檔案'),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  // AppBar 和操作按鈕
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('匯入/匯出 節點和邊'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.import_export),
-            onPressed: () {
-              _showImportExportSheet('import', 'nodes');
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.import_export),
-            onPressed: () {
-              _showImportExportSheet('import', 'edges');
-            },
-          ),
-        ],
-      ),
-      body: const Center(
-        child: Text('選擇匯入/匯出的操作'),
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ElevatedButton(
+              onPressed: () async {
+                await exportData(context, nodes, edges);
+              },
+              child: const Text('匯出'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final imported = await importData(context);
+                if (imported != null) {
+                  onImport(imported['nodes'], imported['edges']);
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('匯入'),
+            ),
+          ],
+        ),
       ),
     );
   }
+}
+
+Future<void> exportData(BuildContext context, List<LatLng> nodes,
+    List<Map<String, dynamic>> edges) async {
+  Map<String, dynamic> data = {
+    'nodes': List.generate(
+        nodes.length,
+        (i) => {
+              'id': i,
+              'x': 0,
+              'y': 0,
+              'lat': nodes[i].latitude,
+              'lon': nodes[i].longitude,
+            }),
+    'edges': List.generate(
+        edges.length,
+        (i) => {
+              'id': i,
+              'from': edges[i]['from'],
+              'to': edges[i]['to'],
+              'distance': edges[i]['distance'],
+            }),
+  };
+
+  String jsonString = jsonEncode(data);
+
+  String? path = await FilePicker.platform.saveFile(
+    fileName: 'roadmap.json',
+    type: FileType.custom,
+    allowedExtensions: ['json'],
+  );
+
+  if (path != null) {
+    File file = File(path);
+    await file.writeAsString(jsonString);
+  }
+}
+
+Future<Map<String, dynamic>?> importData(BuildContext context) async {
+  FilePickerResult? result = await FilePicker.platform.pickFiles(
+    type: FileType.custom,
+    allowedExtensions: ['json'],
+  );
+
+  if (result != null) {
+    String path = result.files.single.path!;
+    String jsonString = await File(path).readAsString();
+    Map<String, dynamic> data = jsonDecode(jsonString);
+
+    List<LatLng> importedNodes = List<LatLng>.from(
+      data['nodes'].map((n) => LatLng(n['lat'], n['lon'])),
+    );
+    List<Map<String, dynamic>> importedEdges =
+        List<Map<String, dynamic>>.from(data['edges']);
+
+    return {
+      'nodes': importedNodes,
+      'edges': importedEdges,
+    };
+  }
+  return null;
 }

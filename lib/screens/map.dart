@@ -19,7 +19,7 @@ class _MapPageState extends State<MapPage> {
   List<int> path = [];
 
   List<LatLng> nodes = [];
-  List<Map<String, int>> edges = [];
+  List<Map<String, dynamic>> edges = [];
   List<LatLng> highlightPathPoints = [];
   final MapController _mapController = MapController();
 
@@ -72,8 +72,8 @@ class _MapPageState extends State<MapPage> {
     return LatLng(latSum / points.length, lonSum / points.length);
   }
 
-  List<int> dijkstra(
-      List<LatLng> nodes, List<Map<String, int>> edges, int start, int goal) {
+  List<int> dijkstra(List<LatLng> nodes, List<Map<String, dynamic>> edges,
+      int start, int goal) {
     Map<int, List<Map<String, dynamic>>> graph = {}; //adjacency list
     for (var edge in edges) {
       int from = edge['from']!;
@@ -142,23 +142,19 @@ class _MapPageState extends State<MapPage> {
           Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.download),
+                icon: const Icon(Icons.settings),
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => DataPage(),
-                    ),
-                  );
-                },
-              ),
-              IconButton(
-                icon: const Icon(Icons.upload),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => DataPage(),
+                  showModalBottomSheet(
+                    context: context,
+                    builder: (_) => DataPage(
+                      nodes: nodes,
+                      edges: edges,
+                      onImport: (newNodes, newEdges) {
+                        setState(() {
+                          nodes = newNodes;
+                          edges = newEdges;
+                        });
+                      },
                     ),
                   );
                 },
