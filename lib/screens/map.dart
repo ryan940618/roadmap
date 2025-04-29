@@ -16,6 +16,7 @@ class _MapPageState extends State<MapPage> {
   int? selectedNode;
   int? startNode;
   int? endNode;
+  List<int> waypoints = [];
   List<int> path = [];
 
   List<LatLng> nodes = [];
@@ -276,7 +277,11 @@ class _MapPageState extends State<MapPage> {
         child: GestureDetector(
           onTap: () {
             setState(() {
-              selectedNode = index;
+              if (waypoints.contains(index)) {
+                waypoints.remove(index);
+              } else {
+                selectedNode = index;
+              }
             });
           },
           child: Icon(
@@ -284,14 +289,18 @@ class _MapPageState extends State<MapPage> {
                 ? Icons.play_arrow
                 : index == endNode
                     ? Icons.flag
-                    : Icons.circle,
-            color: index == startNode
-                ? Colors.green
-                : index == endNode
-                    ? Colors.red
-                    : index == selectedNode
-                        ? Colors.orange
-                        : Colors.blue,
+                    : waypoints.contains(index)
+                        ? Icons.star
+                        : Icons.circle,
+            color: index == selectedNode
+                ? Colors.orange
+                : index == startNode
+                    ? Colors.green
+                    : index == endNode
+                        ? Colors.red
+                        : waypoints.contains(index)
+                            ? Colors.amber
+                            : Colors.blue,
             size: 20,
           ),
         ),

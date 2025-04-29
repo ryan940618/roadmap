@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.ryan940618.roadmap"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 35
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
