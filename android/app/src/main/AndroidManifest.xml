@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
     <application
-        android:label="roadmap"
+        android:label="道路圖資分析與計算 Demo"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
