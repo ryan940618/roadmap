@@ -352,7 +352,11 @@ class _MapPageState extends State<MapPage> {
                         : waypoints.contains(index)
                             ? Colors.amber
                             : Colors.blue,
-            size: 20,
+            size: index == startNode
+                ? 30
+                : index == endNode
+                    ? 25
+                    : 20,
           ),
         ),
       );
