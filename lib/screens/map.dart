@@ -137,11 +137,12 @@ class _MapPageState extends State<MapPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('道路圖資分析與計算 Demo'),
-        actions: [
-          Row(
-            children: [
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(160),
+        child: AppBar(
+          title: const Text('道路圖資分析與計算 Demo'),
+          actions: [
+            Row(children: [
               IconButton(
                 icon: const Icon(Icons.settings),
                 onPressed: () {
@@ -160,92 +161,142 @@ class _MapPageState extends State<MapPage> {
                   );
                 },
               ),
-              const Text('起點: '),
-              DropdownButton<int?>(
-                value: startNode,
-                hint: const Text('請選擇'),
-                items: [
-                  const DropdownMenuItem(
-                    value: null,
-                    child: Text('請選擇'),
-                  ),
-                  ...List.generate(nodes.length, (index) {
-                    return DropdownMenuItem(
-                      value: index,
-                      child: Text('n$index'),
-                    );
-                  })
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    startNode = value;
-                  });
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                onPressed: () {
+                  resetNavigation();
                 },
               ),
-              const SizedBox(width: 16),
-              const Text('終點: '),
-              DropdownButton<int?>(
-                value: endNode,
-                hint: const Text('請選擇'),
-                items: [
-                  const DropdownMenuItem(
-                    value: null,
-                    child: Text('請選擇'),
+            ]),
+          ],
+          flexibleSpace: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 48, 16, 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Row(
+                    children: [
+                      const Text('起點: '),
+                      DropdownButton<int?>(
+                        value: startNode,
+                        hint: const Text('請選擇'),
+                        items: [
+                          const DropdownMenuItem(
+                            value: null,
+                            child: Text('請選擇'),
+                          ),
+                          ...List.generate(nodes.length, (index) {
+                            return DropdownMenuItem(
+                              value: index,
+                              child: Text('n$index'),
+                            );
+                          })
+                        ],
+                        onChanged: (value) {
+                          setState(() {
+                            startNode = value;
+                          });
+                        },
+                      ),
+                      const Text('終點: '),
+                      DropdownButton<int?>(
+                        value: endNode,
+                        hint: const Text('請選擇'),
+                        items: [
+                          const DropdownMenuItem(
+                            value: null,
+                            child: Text('請選擇'),
+                          ),
+                          ...List.generate(nodes.length, (index) {
+                            return DropdownMenuItem(
+                              value: index,
+                              child: Text('n$index'),
+                            );
+                          })
+                        ],
+                        onChanged: (value) {
+                          setState(() {
+                            endNode = value;
+                          });
+                        },
+                      ),
+                      const Spacer(),
+                      ElevatedButton.icon(
+                        onPressed: (startNode != null && endNode != null)
+                            ? () {
+                                path = dijkstra(
+                                    nodes, edges, startNode!, endNode!);
+                                highlightPath(path);
+                                setState(() {});
+                              }
+                            : null,
+                        icon: const Icon(Icons.navigation),
+                        label: const Text('計算路線'),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          textStyle: const TextStyle(fontSize: 16),
+                        ),
+                      )
+                    ],
                   ),
-                  ...List.generate(nodes.length, (index) {
-                    return DropdownMenuItem(
-                      value: index,
-                      child: Text('n$index'),
-                    );
-                  })
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Visibility(
+                        visible: selectedNode != null,
+                        maintainSize: true,
+                        maintainAnimation: true,
+                        maintainState: true,
+                        child: Text(
+                          '選中: n$selectedNode',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                      ),
+                      const Spacer(),
+                      ElevatedButton.icon(
+                        onPressed: selectedNode != null
+                            ? () {
+                                setState(() {
+                                  startNode = selectedNode;
+                                  selectedNode = null;
+                                });
+                              }
+                            : null,
+                        icon: const Icon(Icons.flag),
+                        label: const Text('設為起點'),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          textStyle: const TextStyle(fontSize: 16),
+                        ),
+                      ),
+                      const Spacer(),
+                      ElevatedButton.icon(
+                        onPressed: selectedNode != null
+                            ? () {
+                                setState(() {
+                                  endNode = selectedNode;
+                                  selectedNode = null;
+                                });
+                              }
+                            : null,
+                        icon: const Icon(Icons.location_on),
+                        label: const Text('設為終點'),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          textStyle: const TextStyle(fontSize: 16),
+                        ),
+                      ),
+                    ],
+                  )
                 ],
-                onChanged: (value) {
-                  setState(() {
-                    endNode = value;
-                  });
-                },
               ),
-            ],
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.flag),
-            onPressed: selectedNode != null
-                ? () {
-                    setState(() {
-                      startNode = selectedNode;
-                      selectedNode = null;
-                    });
-                  }
-                : null,
-          ),
-          IconButton(
-            icon: const Icon(Icons.location_on),
-            onPressed: selectedNode != null
-                ? () {
-                    setState(() {
-                      endNode = selectedNode;
-                      selectedNode = null;
-                    });
-                  }
-                : null,
-          ),
-          IconButton(
-            icon: const Icon(Icons.navigation),
-            onPressed: (startNode != null && endNode != null)
-                ? () {
-                    path = dijkstra(nodes, edges, startNode!, endNode!);
-                    highlightPath(path);
-                    setState(() {});
-                  }
-                : null,
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              resetNavigation();
-            },
-          ),
-        ],
+        ),
       ),
       body: FlutterMap(
         mapController: _mapController,
