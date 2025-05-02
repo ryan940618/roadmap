@@ -4,6 +4,7 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../widgets/data.dart';
+import '../widgets/editor.dart';
 
 class MapPage extends StatefulWidget {
   const MapPage({super.key});
@@ -143,6 +144,15 @@ class _MapPageState extends State<MapPage> {
           title: const Text('道路圖資分析與計算 Demo'),
           actions: [
             Row(children: [
+              IconButton(
+                icon: const Icon(Icons.edit_attributes_rounded),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                        builder: (context) => const RoadmapEditor()),
+                  );
+                },
+              ),
               IconButton(
                 icon: const Icon(Icons.settings),
                 onPressed: () {
