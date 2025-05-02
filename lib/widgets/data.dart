@@ -55,8 +55,6 @@ Future<void> exportData(BuildContext context, List<LatLng> nodes,
         nodes.length,
         (i) => {
               'id': i,
-              'x': 0,
-              'y': 0,
               'lat': nodes[i].latitude,
               'lon': nodes[i].longitude,
             }),
