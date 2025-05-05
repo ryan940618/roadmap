@@ -28,9 +28,8 @@ class _GenerateSheetState extends State<GenerateSheet> {
   }
 
   Map<String, dynamic> _generateRoadmap() {
-    final Random random = Random(10); // 固定随机种子
+    final Random random = Random(10);
 
-    // 生成节点
     List<List<int>> nodes = [];
     for (int i = 0; i < nodeCount; i++) {
       int x = random.nextInt(spaceSize.toInt());
@@ -38,11 +37,10 @@ class _GenerateSheetState extends State<GenerateSheet> {
       nodes.add([x, y]);
     }
 
-    // 对节点进行排序
     nodes.sort((a, b) =>
         (a[0] * a[0] + a[1] * a[1]).compareTo(b[0] * b[0] + b[1] * b[1]));
 
-    // 计算Delaunay三角剖分（此处用简单的方式替代）
+    //Delaunay
     List<List<int>> edges = [];
     for (int i = 0; i < nodes.length; i++) {
       for (int j = i + 1; j < nodes.length; j++) {
@@ -52,11 +50,9 @@ class _GenerateSheetState extends State<GenerateSheet> {
       }
     }
 
-    // 根据距离排序并取前 maxEdges 条边
     edges.sort((a, b) => a[0].compareTo(b[0]));
     edges = edges.take(maxEdges).toList();
 
-    // 创建节点列表（转换为经纬度）
     List<LatLng> nodeList = [];
     for (int i = 0; i < nodes.length; i++) {
       int x = nodes[i][0];
@@ -66,7 +62,6 @@ class _GenerateSheetState extends State<GenerateSheet> {
       nodeList.add(LatLng(lat, lon));
     }
 
-    // 创建边列表
     List<Map<String, dynamic>> edgeList = [];
     for (int i = 0; i < edges.length; i++) {
       edgeList.add({
@@ -77,7 +72,6 @@ class _GenerateSheetState extends State<GenerateSheet> {
       });
     }
 
-    // 生成 road map 返回
     return {'nodes': nodeList, 'edges': edgeList};
   }
 

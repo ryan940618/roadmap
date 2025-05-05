@@ -159,6 +159,7 @@ class _MapPageState extends State<MapPage> {
                 onPressed: () {
                   showModalBottomSheet(
                     context: context,
+                    isScrollControlled: true,
                     builder: (_) => GenerateSheet(
                       onGenerate: (nodes, edges) {
                         setState(() {
