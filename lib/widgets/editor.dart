@@ -47,8 +47,18 @@ class _RoadmapEditorState extends State<RoadmapEditor> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Roadmap Editor"),
+        title: const Text("自定義Roadmap產生器"),
         actions: [
+          Visibility(
+            visible: selectedNodeId != null,
+            maintainSize: true,
+            maintainAnimation: true,
+            maintainState: true,
+            child: Text(
+              '選中: n$selectedNodeId',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.download),
             onPressed: _exportRoadmap,
@@ -61,26 +71,25 @@ class _RoadmapEditorState extends State<RoadmapEditor> {
       ),
       body: Row(
         children: [
-          // Side panel
           SizedBox(
             width: 200,
             child: Column(
               children: [
                 DropdownButton<int?>(
-                  hint: const Text("Start Node"),
+                  hint: const Text("起點"),
                   value: startId,
                   items: nodes
                       .map((n) => DropdownMenuItem(
-                          value: n.id, child: Text("Node ${n.id}")))
+                          value: n.id, child: Text("n${n.id}")))
                       .toList(),
                   onChanged: (v) => setState(() => startId = v),
                 ),
                 DropdownButton<int?>(
-                  hint: const Text("End Node"),
+                  hint: const Text("終點"),
                   value: endId,
                   items: nodes
                       .map((n) => DropdownMenuItem(
-                          value: n.id, child: Text("Node ${n.id}")))
+                          value: n.id, child: Text("n${n.id}")))
                       .toList(),
                   onChanged: (v) => setState(() => endId = v),
                 ),
@@ -102,14 +111,14 @@ class _RoadmapEditorState extends State<RoadmapEditor> {
                       });
                     }
                   },
-                  child: const Text("Add Edge"),
+                  child: const Text("對接(產生edge)"),
                 ),
                 const Divider(),
                 Expanded(
                   child: ListView(
                     children: nodes.map((n) {
                       return ListTile(
-                        title: Text("Node ${n.id}"),
+                        title: Text("n${n.id}"),
                         selected: n.id == selectedNodeId,
                         onTap: () => setState(() => selectedNodeId = n.id),
                         trailing: IconButton(
@@ -193,13 +202,12 @@ class _RoadmapEditorState extends State<RoadmapEditor> {
   }
 
   Future<void> _exportRoadmap() async {
-    // 建立 ID 對應表：舊 ID → 新連續 ID（0 開始）
+    //編輯器內的id可能會不連續，所以轉成連續的index
     final idMap = <int, int>{};
     for (int i = 0; i < nodes.length; i++) {
       idMap[nodes[i].id] = i;
     }
 
-    // 重建 nodes 與 edges，套用新的 ID
     final exportedNodes = nodes.asMap().entries.map((entry) {
       final newId = entry.key;
       final node = entry.value;
@@ -212,11 +220,11 @@ class _RoadmapEditorState extends State<RoadmapEditor> {
 
     final exportedEdges = edges
         .map((e) {
-          // 避免匯出不存在的點（已被刪除）
-          if (!idMap.containsKey(e.from) || !idMap.containsKey(e.to))
+          if (!idMap.containsKey(e.from) || !idMap.containsKey(e.to)) {
             return null;
+          }
           return {
-            'id': idMap[e.id] ?? 0, // 你可以也讓 edge id 連續，或保持不變
+            'id': idMap[e.id] ?? 0,
             'from': idMap[e.from],
             'to': idMap[e.to],
             'distance': e.distance,
@@ -242,7 +250,7 @@ class _RoadmapEditorState extends State<RoadmapEditor> {
       await file.writeAsString(jsonStr, flush: true);
     }
     ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text("匯出成功（ID 已重新編號）")));
+        .showSnackBar(const SnackBar(content: Text("匯出成功")));
   }
 
   Future<void> _importRoadmap() async {
