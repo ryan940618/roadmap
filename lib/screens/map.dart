@@ -155,7 +155,7 @@ class _MapPageState extends State<MapPage> {
                 },
               ),
               IconButton(
-                icon: const Icon(Icons.settings),
+                icon: const Icon(Icons.generating_tokens_rounded),
                 onPressed: () {
                   showModalBottomSheet(
                     context: context,
