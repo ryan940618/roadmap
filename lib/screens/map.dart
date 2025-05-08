@@ -419,23 +419,6 @@ class _MapPageState extends State<MapPage> {
     return polylines;
   }
 
-  int findNearestNode(LatLng latlng) {
-    double minDist = double.infinity;
-    int nearest = 0;
-    for (int i = 0; i < nodes.length; i++) {
-      double dist = const Distance().as(
-        LengthUnit.Meter,
-        nodes[i],
-        latlng,
-      );
-      if (dist < minDist) {
-        minDist = dist;
-        nearest = i;
-      }
-    }
-    return nearest;
-  }
-
   void resetNavigation() {
     setState(() {
       startNode = null;
