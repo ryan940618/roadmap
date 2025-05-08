@@ -28,7 +28,7 @@ class _GenerateSheetState extends State<GenerateSheet> {
   }
 
   Map<String, dynamic> _generateRoadmap() {
-    final Random random = Random(10);
+    final Random random = Random();
 
     List<List<int>> nodes = [];
     for (int i = 0; i < nodeCount; i++) {
