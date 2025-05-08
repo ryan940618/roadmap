@@ -33,7 +33,7 @@ class _MapPageState extends State<MapPage> {
   }
 
   Future<void> loadRoadMap() async {
-    final String data = await rootBundle.loadString('assets/roadmap.json');
+    final String data = await rootBundle.loadString('assets/default.json');
     final jsonResult = json.decode(data);
 
     for (var node in jsonResult['nodes']) {
