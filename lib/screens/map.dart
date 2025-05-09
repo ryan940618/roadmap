@@ -18,13 +18,18 @@ class _MapPageState extends State<MapPage> {
   int? selectedNode;
   int? startNode;
   int? endNode;
-  List<int> waypoints = [];
+  List<int> highlightedPoints = [];
   List<int> path = [];
 
   List<LatLng> nodes = [];
   List<Map<String, dynamic>> edges = [];
   List<LatLng> highlightPathPoints = [];
   final MapController _mapController = MapController();
+  final Distance _distance = const Distance();
+
+  double latLngDistance(LatLng a, LatLng b) {
+    return _distance.as(LengthUnit.Meter, a, b);
+  }
 
   @override
   void initState() {
@@ -50,6 +55,26 @@ class _MapPageState extends State<MapPage> {
   }
 
   void highlightPath(List<int> nodeIndexes) {
+    highlightedPoints = [];
+    highlightPathPoints = [];
+    for (var index in nodeIndexes) {
+      if (index >= 0 && index < nodes.length) {
+        highlightPathPoints.add(nodes[index]);
+      }
+    }
+
+    if (highlightPathPoints.isNotEmpty) {
+      LatLng center = _calculateCenter(highlightPathPoints);
+      _mapController.move(center, 15);
+    }
+
+    setState(() {});
+  }
+
+  void highlightPoints(List<int> nodeIndexes) {
+    highlightPathPoints = [];
+    highlightedPoints = [...nodeIndexes];
+
     highlightPathPoints = [];
     for (var index in nodeIndexes) {
       if (index >= 0 && index < nodes.length) {
@@ -146,6 +171,113 @@ class _MapPageState extends State<MapPage> {
           actions: [
             Row(children: [
               IconButton(
+                icon: const Icon(Icons.circle),
+                tooltip: '半徑內找鄰居',
+                onPressed: selectedNode != null
+                    ? () {
+                        final controller = TextEditingController();
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          builder: (context) {
+                            return SingleChildScrollView(
+                              padding: EdgeInsets.only(
+                                bottom:
+                                    MediaQuery.of(context).viewInsets.bottom,
+                                left: 16,
+                                right: 16,
+                                top: 16,
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text("半徑內找鄰居",
+                                      style: TextStyle(fontSize: 18)),
+                                  TextField(
+                                    controller: controller,
+                                    keyboardType: TextInputType.number,
+                                    decoration: const InputDecoration(
+                                        hintText: '半徑(公尺)'),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Center(
+                                    child: ElevatedButton(
+                                      child: const Text("尋找"),
+                                      onPressed: () {
+                                        final count =
+                                            double.tryParse(controller.text);
+                                        if (count != null &&
+                                            selectedNode != null) {
+                                          findWithinRadius(
+                                              selectedNode!, count);
+                                          Navigator.pop(context);
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        );
+                      }
+                    : null,
+              ),
+              IconButton(
+                icon: const Icon(Icons.group),
+                tooltip: '找特定數量鄰居',
+                onPressed: selectedNode != null
+                    ? () {
+                        final controller = TextEditingController();
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          builder: (context) {
+                            return SingleChildScrollView(
+                              padding: EdgeInsets.only(
+                                bottom:
+                                    MediaQuery.of(context).viewInsets.bottom,
+                                left: 16,
+                                right: 16,
+                                top: 16,
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text("找特定數量最近鄰居",
+                                      style: TextStyle(fontSize: 18)),
+                                  TextField(
+                                    controller: controller,
+                                    keyboardType: TextInputType.number,
+                                    decoration:
+                                        const InputDecoration(hintText: '數量'),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Center(
+                                    child: ElevatedButton(
+                                      child: const Text("尋找"),
+                                      onPressed: () {
+                                        final count =
+                                            int.tryParse(controller.text);
+                                        if (count != null &&
+                                            selectedNode != null) {
+                                          findClosest(selectedNode!, count);
+                                          Navigator.pop(context);
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        );
+                      }
+                    : null,
+              ),
+              IconButton(
                 icon: const Icon(Icons.edit_attributes_rounded),
                 onPressed: () {
                   Navigator.of(context).push(
@@ -165,6 +297,7 @@ class _MapPageState extends State<MapPage> {
                         setState(() {
                           this.nodes = nodes;
                           this.edges = edges;
+                          resetNavigation();
                         });
                       },
                     ),
@@ -183,6 +316,7 @@ class _MapPageState extends State<MapPage> {
                         setState(() {
                           nodes = newNodes;
                           edges = newEdges;
+                          resetNavigation();
                         });
                       },
                     ),
@@ -356,8 +490,8 @@ class _MapPageState extends State<MapPage> {
         child: GestureDetector(
           onTap: () {
             setState(() {
-              if (waypoints.contains(index)) {
-                waypoints.remove(index);
+              if (highlightedPoints.contains(index)) {
+                highlightedPoints.remove(index);
               } else {
                 selectedNode = index;
               }
@@ -368,16 +502,14 @@ class _MapPageState extends State<MapPage> {
                 ? Icons.play_arrow
                 : index == endNode
                     ? Icons.flag
-                    : waypoints.contains(index)
-                        ? Icons.star
-                        : Icons.circle,
+                    : Icons.circle,
             color: index == selectedNode
                 ? Colors.orange
                 : index == startNode
                     ? Colors.green
                     : index == endNode
                         ? Colors.red
-                        : waypoints.contains(index)
+                        : highlightedPoints.contains(index)
                             ? Colors.amber
                             : Colors.blue,
             size: index == startNode
@@ -424,7 +556,39 @@ class _MapPageState extends State<MapPage> {
       startNode = null;
       endNode = null;
       selectedNode = null;
+      highlightedPoints = [];
       path.clear();
     });
+  }
+
+  void findWithinRadius(int targetIndex, double radiusInMeters) {
+    final target = nodes[targetIndex];
+
+    final nearby = <int>[];
+    for (int i = 0; i < nodes.length; i++) {
+      if (i == targetIndex) continue;
+      if (latLngDistance(target, nodes[i]) <= radiusInMeters) {
+        nearby.add(i);
+      }
+    }
+
+    highlightPoints(nearby);
+  }
+
+  void findClosest(int targetIndex, int count) {
+    final target = nodes[targetIndex];
+
+    final distances = <Map<String, dynamic>>[];
+    for (int i = 0; i < nodes.length; i++) {
+      if (i == targetIndex) continue;
+      final d = latLngDistance(target, nodes[i]);
+      distances.add({'index': i, 'distance': d});
+    }
+
+    distances.sort((a, b) => a['distance'].compareTo(b['distance']));
+
+    final closest =
+        distances.take(count).map((e) => e['index'] as int).toList();
+    highlightPoints(closest);
   }
 }
